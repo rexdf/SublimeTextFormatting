@@ -7,9 +7,20 @@ import sublime
 import sublime_plugin
 
 
-class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
+class TextFormattingPrettifyJsonCommand(sublime_plugin.TextCommand):
     def run(self, edit, **kwargs):
-        for region in self.view.sel():
+        # Save the document size
+        view_size = self.view.size()
+        # Get selections
+        regions = self.view.sel()
+        num = len(regions)
+        x = len(self.view.substr(regions[0]))
+        # Select the whole document if there is no user selection
+        if num <= 1 and x == 0:
+            regions.clear()
+            regions.add(sublime.Region(0, view_size))
+
+        for region in regions:
             try:
                 error = self.run_each(edit, region, **kwargs)
             except Exception as exception:
@@ -17,6 +28,7 @@ class TextFormattingPrettifyJson(sublime_plugin.TextCommand):
 
             if error:
                 sublime.status_message(error)
+        self.view.end_edit(edit)
 
     def run_each(self, edit, region, maxlength=80):
         if region.empty():
